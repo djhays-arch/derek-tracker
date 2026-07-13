@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Derek Hays — Daily Tracker v5</title>
+<title>Derek Hays — Daily Tracker v6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -22,6 +22,11 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .hbadge{font-size:11px;font-weight:600;border-radius:99px;padding:4px 9px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .streak-badge{cursor:pointer;color:var(--amber);background:var(--amber-bg);border-color:var(--amber-mid)}
 .hli-streak-badge{cursor:pointer;color:var(--green);background:var(--green-bg);border-color:var(--green-mid)}
+.sync-pill{cursor:pointer;font-size:12px}
+.sync-off{color:var(--text3)}
+.sync-connecting{color:var(--amber);background:var(--amber-bg);border-color:var(--amber-mid)}
+.sync-synced{color:var(--green);background:var(--green-bg);border-color:var(--green-mid)}
+.sync-error{color:var(--red);background:var(--red-bg);border-color:var(--red-mid)}
 .dark-toggle{width:32px;height:32px;border-radius:99px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all .15s;touch-action:manipulation}
 .dark-toggle:hover{background:var(--surface3)}
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -549,6 +554,30 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   </div>
 </div>
 
+<div class="confirm-modal" id="reply-modal">
+  <div class="confirm-box" style="max-width:480px;text-align:left">
+    <div class="confirm-title">📥 Paste Claude's Reply</div>
+    <div class="confirm-body" style="text-align:left">Paste what Claude replied with in your other tab. It'll be saved here.</div>
+    <textarea class="note-input" id="reply-modal-input" style="min-height:160px;margin-top:4px;margin-bottom:16px;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2)" placeholder="Paste Claude's reply here…"></textarea>
+    <div class="confirm-controls">
+      <button class="cbtn cbtn-cancel" onclick="closeReplyModal()">Cancel</button>
+      <button class="cbtn cbtn-confirm" onclick="saveReplyModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirm-modal" id="calendar-paste-modal">
+  <div class="confirm-box" style="max-width:480px;text-align:left">
+    <div class="confirm-title">✎ Paste Today's Calendar</div>
+    <div class="confirm-body" style="text-align:left">Copy your agenda from Google Calendar (day view) and paste it below — one event per line. Example: <em>9:00 AM - 9:30 AM Team standup @ Zoom</em></div>
+    <textarea class="note-input" id="cal-paste-input" style="min-height:160px;margin-top:4px;margin-bottom:16px;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2)" placeholder="9:00 AM - 9:30 AM Team standup @ Zoom&#10;1:00 PM Leon site visit"></textarea>
+    <div class="confirm-controls">
+      <button class="cbtn cbtn-cancel" onclick="closeCalendarPasteModal()">Cancel</button>
+      <button class="cbtn cbtn-confirm" onclick="saveCalendarPaste()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="focus-overlay" id="focus-overlay">
   <button class="focus-close" onclick="closeFocus()">✕ Close</button>
   <div class="focus-cat" id="focus-cat"></div>
@@ -587,6 +616,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
       <div class="hbadge" id="live-clock">—</div>
       <div class="hbadge hli-streak-badge" id="hli-streak-badge" onclick="switchTab('goals')" title="HLI streak — tap for Goals">🌱 0</div>
       <div class="hbadge streak-badge" id="streak-badge" onclick="switchTab('history')">🔥 0</div>
+      <div class="hbadge sync-pill sync-off" id="sync-pill" onclick="manualSyncPull()" title="Local only — tap to force sync">○</div>
       <button class="dark-toggle" id="dark-toggle" onclick="toggleDark()">🌙</button>
     </div>
   </div>
@@ -625,7 +655,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
       <button class="today-quick-chip primary" onclick="generateMorningBrief();expandTodaySection('sec-morning')">☀️ Morning Brief</button>
       <button class="today-quick-chip" onclick="document.getElementById('deal-note-input-v5').focus();expandTodaySection('sec-daily')">📝 Log Deal Note</button>
       <button class="today-quick-chip" onclick="document.getElementById('loop-input-v5').focus();expandTodaySection('sec-daily')">⚡ Add Loop</button>
-      <button class="today-quick-chip" onclick="syncCalendar()">↻ Sync Calendar</button>
+      <button class="today-quick-chip" onclick="openCalendarPasteModal()">✎ Paste Calendar</button>
       <button class="today-quick-chip" onclick="buildSnapshot();expandTodaySection('sec-evening')">🌙 Evening Snapshot</button>
     </div>
   </div>
@@ -644,7 +674,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   <div class="cal-sync-block">
     <div class="cal-sync-label">
       <span>📅 Today's Calendar</span>
-      <button class="btn-sync-cal" id="btn-sync-cal-v5" onclick="syncCalendar()">↻ Sync</button>
+      <button class="btn-sync-cal" id="btn-sync-cal-v5" onclick="openCalendarPasteModal()">✎ Paste</button>
     </div>
     <div id="cal-events-list-v5"><div class="cal-empty">Tap Sync to pull today's events from Google Calendar.</div></div>
   </div>
@@ -666,7 +696,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
         <div id="morning-brief-block-v5" class="morning-brief-block" style="margin-top:14px">
           <div class="morning-brief-label">
             <span>☀️ Morning Brief</span>
-            <button class="btn-brief" onclick="generateMorningBrief()">✦ Generate Brief</button>
+            <button class="btn-brief" id="btn-morning-brief-v5" onclick="generateMorningBrief()">✦ Generate Brief</button>
           </div>
           <div id="brief-response-v5" class="brief-response"></div>
         </div>
@@ -715,7 +745,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
         <div class="thursday-block" id="thursday-block-v5">
           <div class="thursday-label">📋 Thursday Lead Report</div>
           <div class="thursday-desc">Builds a draft email to Ty + Christian using your deal notes, loops, and pipeline status from this week.</div>
-          <button class="btn-thursday" onclick="buildThursdayReport()">⚡ Generate Draft Report</button>
+          <button class="btn-thursday" id="btn-thursday-v5" onclick="buildThursdayReport()">⚡ Generate Draft Report</button>
           <div class="thursday-draft" id="thursday-draft-v5"></div>
         </div>
         <!-- Deal notes (with auto-tag) -->
@@ -794,7 +824,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   <div class="cal-sync-block">
     <div class="cal-sync-label">
       <span>📅 Today's Calendar</span>
-      <button class="btn-sync-cal" id="btn-sync-cal" onclick="syncCalendar()">↻ Sync</button>
+      <button class="btn-sync-cal" id="btn-sync-cal" onclick="openCalendarPasteModal()">✎ Paste</button>
     </div>
     <div id="cal-events-list"><div class="cal-empty">Tap Sync to pull today's events from Google Calendar.</div></div>
   </div>
@@ -1088,9 +1118,10 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 
   <div class="sl">App Info</div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--text2);line-height:1.8">
-    <strong style="color:var(--text)">Derek Hays — Daily Tracker v5</strong><br>
-    Built May 2026 · 5-tab nav, auto-brief, deal auto-tag, HLI pacing, offline-ready<br>
-    Stores data in browser localStorage — nothing sent to servers<br>
+    <strong style="color:var(--text)">Derek Hays — Daily Tracker v6</strong><br>
+    Built July 2026 · 5-tab nav, auto-brief, deal auto-tag, HLI pacing, offline-ready, cross-device sync<br>
+    AI features (Morning Brief, Evening Dump, Thursday Report, Calendar) work by copying a prompt for you to paste into Claude.ai — no API key needed, works on your Claude subscription<br>
+    Stores data in browser localStorage, with optional Firestore sync across devices (see sync dot in header — tap it to force a pull)<br>
     <span style="font-size:11px;color:var(--text3)">Add to iPhone Home Screen via Chrome → ⋯ → Add to Home Screen (after GitHub Pages deploy)</span>
   </div>
 </div>
@@ -1109,6 +1140,9 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 var today=new Date(),todayStr=today.toISOString().slice(0,10);
 var dateKey='dht6_'+todayStr,noteKey='dhtn_'+todayStr;
@@ -1406,35 +1440,36 @@ function renderHliTracker(){
 }
 
 // ─── GOOGLE CALENDAR SYNC ────────────────────────────────────────
-function syncCalendar(){
-  var btn=document.getElementById('btn-sync-cal');
-  var listEl=document.getElementById('cal-events-list');
-  // Check cache first (valid for 30min)
-  try{var c=localStorage.getItem(calCacheKey);if(c){var cd=JSON.parse(c);if(Date.now()-cd.ts<1800000){renderCalEvents(cd.events);return;}}}catch(e){}
-  btn.disabled=true;btn.textContent='Syncing…';
-  listEl.innerHTML='<div class="cal-empty" style="font-style:normal">Fetching events…</div>';
-  var prompt='Use Google Calendar to list all events for today, '+DAYS[today.getDay()]+' '+MONTHS[today.getMonth()]+' '+today.getDate()+' '+today.getFullYear()+'. Return ONLY a JSON array with objects: {title, start, end, location}. start/end in format "9:00 AM". If no events, return []. No preamble, no markdown, just the JSON array.';
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1000,
-      mcp_servers:[{type:'url',url:'https://calendarmcp.googleapis.com/mcp/v1',name:'google-calendar'}],
-      messages:[{role:'user',content:prompt}]
-    })
-  }).then(function(r){return r.json();}).then(function(data){
-    var text='';
-    data.content.forEach(function(c){if(c.type==='text')text+=c.text;if(c.type==='mcp_tool_result'&&c.content){c.content.forEach(function(cc){if(cc.text)text+=cc.text;});}});
-    var events=[];
-    try{var clean=text.replace(/```json|```/g,'').trim();var start=clean.indexOf('['),end=clean.lastIndexOf(']');if(start!==-1&&end!==-1)events=JSON.parse(clean.slice(start,end+1));}catch(e){}
-    try{localStorage.setItem(calCacheKey,JSON.stringify({events:events,ts:Date.now()}));}catch(e){}
-    renderCalEvents(events);
-    btn.disabled=false;btn.textContent='↻ Sync';
-  }).catch(function(err){
-    listEl.innerHTML='<div class="cal-empty">Could not sync. Make sure Google Calendar is connected in Claude.ai settings.</div>';
-    btn.disabled=false;btn.textContent='↻ Sync';
-  });
+function openCalendarPasteModal(){
+  var ta=document.getElementById('cal-paste-input');
+  ta.value='';
+  try{var c=localStorage.getItem(calCacheKey);if(c){var cd=JSON.parse(c);if(cd.raw)ta.value=cd.raw;}}catch(e){}
+  document.getElementById('calendar-paste-modal').classList.add('active');
+  setTimeout(function(){ta.focus();},50);
+}
+function closeCalendarPasteModal(){document.getElementById('calendar-paste-modal').classList.remove('active');}
+function parseCalLine(line){
+  line=line.trim();if(!line)return null;
+  var start='',end='',rest=line;
+  var m=line.match(/^(\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?)\s*[-–—]\s*(\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?)\s+(.*)$/i);
+  if(m){start=m[1].trim().toUpperCase();end=m[2].trim().toUpperCase();rest=m[3].trim();}
+  else{
+    var m2=line.match(/^(\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?))\s+(.*)$/i);
+    if(m2){start=m2[1].trim().toUpperCase();rest=m2[2].trim();}
+  }
+  var location='';
+  if(rest.indexOf(' @ ')!==-1){var parts=rest.split(' @ ');rest=parts[0].trim();location=parts.slice(1).join(' @ ').trim();}
+  return {title:rest||'(untitled)',start:start,end:end,location:location};
+}
+function saveCalendarPaste(){
+  var raw=document.getElementById('cal-paste-input').value;
+  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var events=lines.map(parseCalLine).filter(Boolean);
+  try{localStorage.setItem(calCacheKey,JSON.stringify({events:events,raw:raw,ts:Date.now()}));}catch(e){}
+  renderCalEvents(events);
+  if(typeof renderTodayPanel==='function')renderTodayPanel();
+  closeCalendarPasteModal();
+  celebrate('📅 Calendar updated — '+events.length+' event'+(events.length===1?'':'s'));
 }
 function renderCalEvents(events){
   var listEl=document.getElementById('cal-events-list');
@@ -1451,21 +1486,60 @@ function renderCalEvents(events){
 
 // ─── THURSDAY REPORT ─────────────────────────────────────────────
 function buildThursdayReport(){
-  var btn=document.getElementById('btn-thursday');btn.disabled=true;btn.textContent='Building…';
   var allDealNotes=[];
   for(var i=0;i<7;i++){var d=new Date(today);d.setDate(d.getDate()-i);var ds=d.toISOString().slice(0,10);try{var dn=localStorage.getItem('dhtdn_'+ds);if(dn){var parsed=JSON.parse(dn);parsed.forEach(function(note){allDealNotes.push({date:ds,time:note.time,text:note.text});});}}catch(e){}}
   var openLoopsList=loops.filter(function(l){return!l.done;}).map(function(l){return l.text;});
   var pipelineSummary=pipeline.filter(function(d){return d.status!=='dead';}).map(function(d){return d.name+(d.county?' ('+d.county+')':'')+' — '+STATUS_LABELS[d.status]+(d.lastNote?' — Last: '+d.lastNote:'');}).join('\n');
   var prompt='You are Derek Hays\' EA. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. Every Thursday he sends a Lead Report email to Ty Rinehart (Director of Land) and Christian (Division President).\n\nDATE: '+DAYS[today.getDay()]+', '+MONTHS[today.getMonth()]+' '+today.getDate()+'\n\nACTIVE PIPELINE:\n'+(pipelineSummary||'No deals in pipeline yet.')+'\n\nDEAL NOTES THIS WEEK:\n'+(allDealNotes.length?allDealNotes.map(function(n){return '['+n.date+' '+n.time+'] '+n.text;}).join('\n'):'None logged.')+'\n\nOPEN LOOPS:\n'+(openLoopsList.length?openLoopsList.map(function(l){return '• '+l;}).join('\n'):'None.')+'\n\nDraft a professional Thursday Lead Report email. Subject line, then deal-by-deal bullets with status + any notes. Flag anything needing leadership attention. Under 300 words. Sign as Derek.';
-  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})})
-  .then(function(r){return r.json();}).then(function(data){
-    var text='';if(data.content)data.content.forEach(function(c){if(c.type==='text')text+=c.text;});
-    if(!text)text='Could not generate. Make sure you\'re using Claude.ai.';
-    var draft=document.getElementById('thursday-draft');draft.textContent=text;draft.classList.add('visible');
-    document.getElementById('thursday-btn-row').style.display='flex';btn.disabled=false;btn.textContent='↻ Regenerate';
-  }).catch(function(err){var draft=document.getElementById('thursday-draft');draft.textContent='Error: '+err.message;draft.classList.add('visible');btn.disabled=false;btn.textContent='↻ Try Again';});
+  copyTextToClipboard(prompt);
+  var draft=document.getElementById('thursday-draft');draft.textContent='✓ Copied! Paste into Claude.ai, then tap "Paste Reply" below to save the draft here.';draft.classList.add('visible');
+  ['btn-thursday','btn-thursday-v5'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){b.disabled=false;b.textContent='📥 Paste Reply';b.onclick=function(){openReplyModal('thursday');};}
+  });
+  celebrate('📋 Report prompt copied — paste into Claude.ai');
 }
 function copyThursdayReport(){var text=document.getElementById('thursday-draft').textContent,btn=document.getElementById('copy-thursday-btn');function flash(){btn.textContent='✓ Copied!';btn.classList.add('copied');setTimeout(function(){btn.textContent='📋 Copy Report';btn.classList.remove('copied');},2500);}try{navigator.clipboard.writeText(text).then(flash);}catch(e){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();}}
+
+// ═══ COPY/PASTE AI HELPERS (v6) ═══
+function copyTextToClipboard(text){
+  try{navigator.clipboard.writeText(text);}catch(e){
+    var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';
+    document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e2){}document.body.removeChild(ta);
+  }
+}
+var REPLY_TARGETS={
+  brief:{respId:'brief-response',btnIds:['btn-morning-brief','btn-morning-brief-v5'],regenLabel:'↻ Refresh',regenFn:function(){generateMorningBrief();},storeKey:'morningBriefReply'},
+  evening:{respId:'claude-response-text',boxId:'claude-response-box',btnIds:['btn-send-claude','btn-send-claude-v5'],regenLabel:'✦ Resend',regenFn:function(){sendToClaude();},storeKey:'eveningDumpReply'},
+  thursday:{respId:'thursday-draft',rowId:'thursday-btn-row',btnIds:['btn-thursday','btn-thursday-v5'],regenLabel:'↻ Regenerate',regenFn:function(){buildThursdayReport();},storeKey:'thursdayReportReply'}
+};
+var replyModalTarget=null;
+function openReplyModal(kind){
+  replyModalTarget=kind;
+  var ta=document.getElementById('reply-modal-input');ta.value='';
+  document.getElementById('reply-modal').classList.add('active');
+  setTimeout(function(){ta.focus();},50);
+}
+function closeReplyModal(){document.getElementById('reply-modal').classList.remove('active');replyModalTarget=null;}
+function saveReplyModal(){
+  var text=document.getElementById('reply-modal-input').value.trim();
+  if(!text){closeReplyModal();return;}
+  var t=REPLY_TARGETS[replyModalTarget];
+  if(!t){closeReplyModal();return;}
+  var el=document.getElementById(t.respId);
+  if(el){el.className=el.className.replace('claude-thinking','').trim();el.textContent=text;}
+  if(t.boxId){var box=document.getElementById(t.boxId);if(box)box.classList.add('visible');}
+  if(t.rowId){var row=document.getElementById(t.rowId);if(row)row.style.display='flex';}
+  if(replyModalTarget==='evening')claudeResponseText=text;
+  if(t.storeKey){notes[t.storeKey]=text;notes[t.storeKey+'_date']=todayStr;saveNotes();}
+  var fn=t.regenFn;
+  (t.btnIds||[]).forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){b.disabled=false;b.textContent=t.regenLabel;b.onclick=function(){fn();};}
+  });
+  closeReplyModal();
+  celebrate('✓ Saved');
+}
 
 // TABS
 function switchTab(name){
@@ -1612,18 +1686,17 @@ function buildSnapshot(){
 function copySnapshot(){var text=document.getElementById('snapshot-text').textContent,btn=document.getElementById('copy-btn');if(text==='Hit Generate to build your snapshot.')return;function flash(){btn.textContent='✓ Copied!';btn.classList.add('copied');setTimeout(function(){btn.textContent='📋 Copy';btn.classList.remove('copied');},2500);}try{navigator.clipboard.writeText(text).then(flash);}catch(e){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();}}
 function sendToClaude(){
   var snapshotText=document.getElementById('snapshot-text').textContent;if(!snapshotText||snapshotText==='Hit Generate to build your snapshot.')return;
-  var btn=document.getElementById('btn-send-claude');btn.disabled=true;btn.textContent='Sending…';
   var responseBox=document.getElementById('claude-response-box'),responseText=document.getElementById('claude-response-text');
-  responseBox.classList.add('visible');responseText.className='claude-response-text claude-thinking';responseText.textContent='Organizing your dump…';
   var systemPrompt='You are Derek Hays\' personal Executive Assistant Agent. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis running a 9-county residential pipeline. He also runs Heritage Land Investment (HLI). Faith-driven, family-first.\n\nOrganize his Evening Dump snapshot into this format:\n\n🗓️ EVENING DUMP — [Date]\n\nDEALS / ARBOR\n• [Deal updates]\n\nHLI\n• [HLI action]\n\nPEOPLE / CONVERSATIONS\n• [Names + what\'s needed]\n\nTOMORROW\'S PRIORITIES\n• [Specific actions]\n\nOPEN LOOPS\n• [Persistent items]\n\nPERSONAL / FAMILY\n• [If mentioned]\n\nDEREK\'S MENTAL STATE / ENERGY NOTE\n• [One sentence]\n\n---\n🎯 FIRST MOVE TOMORROW: [Single most important action before 9am]\n\nTight. No filler. Flag urgent with ⚠️';
-  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:systemPrompt,messages:[{role:'user',content:snapshotText}]})})
-  .then(function(r){return r.json();}).then(function(data){
-    var text='';if(data.content)data.content.forEach(function(c){if(c.type==='text')text+=c.text;});
-    if(!text)text='No response. Make sure you\'re using Claude.ai.';
-    claudeResponseText=text;responseText.className='claude-response-text';responseText.textContent=text;
-    btn.disabled=false;btn.textContent='✦ Resend';if(!state['e1']){state['e1']=true;saveState();render();}
-    celebrate('✦ Evening dump organized — you\'re clear to shut down');
-  }).catch(function(err){responseText.className='claude-response-text';responseText.textContent='Error: '+err.message;btn.disabled=false;btn.textContent='✦ Retry';});
+  var fullPrompt=systemPrompt+'\n\n---\n\n'+snapshotText;
+  copyTextToClipboard(fullPrompt);
+  responseBox.classList.add('visible');responseText.className='claude-response-text';responseText.textContent='✓ Copied! Paste into Claude.ai, then tap "Paste Reply" below to save the organized version here.';
+  ['btn-send-claude','btn-send-claude-v5'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){b.disabled=false;b.textContent='📥 Paste Reply';b.onclick=function(){openReplyModal('evening');};}
+  });
+  if(!state['e1']){state['e1']=true;saveState();render();}
+  celebrate('✦ Copied — paste into Claude.ai');
 }
 function copyClaudeResponse(){var text=claudeResponseText,btn=document.getElementById('copy-claude-btn');if(!text)return;function flash(){btn.textContent='✓';setTimeout(function(){btn.textContent='Copy';},2000);}try{navigator.clipboard.writeText(text).then(flash);}catch(e){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();}}
 
@@ -1654,6 +1727,10 @@ function restoreFromFile(event){
       if(!data.data){throw new Error('Invalid backup file');}
       var count=0;
       Object.keys(data.data).forEach(function(k){try{localStorage.setItem(k,data.data[k]);count++;}catch(err){}});
+      if(syncEnabled&&syncDb&&syncUid){
+        var snap={};getAllKeys().forEach(function(k){try{snap[k]=localStorage.getItem(k);}catch(e){}});
+        syncDb.collection('trackers').doc(syncUid).set({data:snap,updatedAt:Date.now()},{merge:true}).catch(function(e){console.log('[sync] restore push error',e);});
+      }
       var s=document.getElementById('backup-status');s.textContent='✓ Restored '+count+' items. Reloading…';s.className='backup-status show granted';
       setTimeout(function(){window.location.reload();},1500);
     }catch(err){
@@ -1800,6 +1877,7 @@ function render(){
 function generateMorningBrief(){
   var btn=document.getElementById('btn-morning-brief');
   var respEl=document.getElementById('brief-response');
+  ['btn-morning-brief','btn-morning-brief-v5'].forEach(function(id){var b=document.getElementById(id);if(b){b.disabled=true;b.textContent='Building…';}});
   btn.disabled=true; btn.textContent='Generating…';
   respEl.className='brief-response visible';
   respEl.style.color='var(--text3)';
@@ -1832,28 +1910,15 @@ function generateMorningBrief(){
 
   var systemPrompt='You are Derek Hays\' personal Executive Assistant Agent. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. He runs a 9-county pipeline and a side land investing business called Heritage Land Investment (HLI). Faith-driven, family-first.\n\nDeliver a tight Morning Brief in this exact format:\n\n📅 MORNING BRIEF — [Day, Date]\n\nCALENDAR TODAY\n• [Time] — [Event] — [prep note if relevant]\n\nTOP 3 PRIORITIES\n1. [Priority — specific action]\n2. [Priority]\n3. [Priority]\n\nPEOPLE TO RESPOND TO\n• [Name] re: [topic] — [urgency]\n\nCARRY-FORWARD FROM YESTERDAY\n• [Key item — 1-2 sentences max]\n\n🎯 FIRST MOVE: [Single most important action before 9am]\n\nRules: Never pad. Flag hard deadlines with ⚠️. If today is Thursday, remind him the Lead Report goes out. Keep it scannable — this is read at 5:30 AM.';
 
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:800,
-      system:systemPrompt,
-      messages:[{role:'user',content:context}]
-    })
-  }).then(function(r){return r.json();}).then(function(data){
-    var text='';
-    if(data.content)data.content.forEach(function(c){if(c.type==='text')text+=c.text;});
-    if(!text)text='Could not generate brief. Check Claude.ai connection.';
-    respEl.style.color='var(--text2)'; respEl.style.fontStyle='normal';
-    respEl.textContent=text;
-    btn.disabled=false; btn.textContent='↻ Refresh';
-    celebrate('☀️ Morning brief ready');
-  }).catch(function(err){
-    respEl.style.color='var(--text3)'; respEl.style.fontStyle='italic';
-    respEl.textContent='Error: '+err.message;
-    btn.disabled=false; btn.textContent='↻ Retry';
+  var fullPrompt=systemPrompt+'\n\n---\n\n'+context;
+  copyTextToClipboard(fullPrompt);
+  respEl.style.color='var(--text2)'; respEl.style.fontStyle='normal';
+  respEl.textContent='✓ Copied! Paste into Claude.ai, then tap "Paste Reply" below to save it here.';
+  ['btn-morning-brief','btn-morning-brief-v5'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){b.disabled=false;b.textContent='📥 Paste Reply';b.onclick=function(){openReplyModal('brief');};}
   });
+  celebrate('☀️ Brief copied — paste into Claude.ai');
 }
 
 // ══════════════════════════════════════════════════════
@@ -2357,6 +2422,112 @@ renderTodayPanel();
 // If page loads on Today tab, check auto-brief eligibility
 setTimeout(maybeAutoBrief,300);
 // ============ END V5 BOOT ============
+
+// ═══════════════════════════════════════════════
+// V6: NATIVE FIRESTORE CROSS-DEVICE SYNC
+// Fill in FIREBASE_CONFIG below (see setup guide) to turn this on.
+// Until then the app runs local-only, exactly as before.
+// ═══════════════════════════════════════════════
+var FIREBASE_CONFIG={
+  apiKey:"REPLACE_ME",
+  authDomain:"REPLACE_ME.firebaseapp.com",
+  projectId:"REPLACE_ME",
+  storageBucket:"REPLACE_ME.appspot.com",
+  messagingSenderId:"REPLACE_ME",
+  appId:"REPLACE_ME"
+};
+var syncEnabled=(FIREBASE_CONFIG.apiKey!=='REPLACE_ME');
+var syncDb=null,syncUid=null,syncDebounceTimer=null,applyingRemoteSync=false;
+
+function setSyncPill(stateName){
+  var el=document.getElementById('sync-pill');if(!el)return;
+  var MAP={off:['○','Local only — tap to force sync'],connecting:['⟳','Connecting…'],synced:['☁︎','Synced — tap to force pull'],error:['⚠','Sync error — tap to retry']};
+  var m=MAP[stateName]||MAP.off;
+  el.textContent=m[0];el.title=m[1];
+  el.className='hbadge sync-pill sync-'+stateName;
+}
+
+function pushSyncSnapshotNow(){
+  if(!syncEnabled||!syncDb||!syncUid)return;
+  var snap={};
+  getAllKeys().forEach(function(k){try{snap[k]=localStorage.getItem(k);}catch(e){}});
+  syncDb.collection('trackers').doc(syncUid).set({data:snap,updatedAt:Date.now()},{merge:true})
+    .then(function(){setSyncPill('synced');})
+    .catch(function(err){console.log('[sync] push error',err);setSyncPill('error');});
+}
+function pushSyncSnapshot(){
+  if(!syncEnabled||!syncDb||!syncUid||applyingRemoteSync)return;
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer=setTimeout(function(){
+    var snap={};
+    getAllKeys().forEach(function(k){try{snap[k]=localStorage.getItem(k);}catch(e){}});
+    syncDb.collection('trackers').doc(syncUid).set({data:snap,updatedAt:Date.now()},{merge:true})
+      .then(function(){setSyncPill('synced');})
+      .catch(function(err){console.log('[sync] push error',err);setSyncPill('error');});
+  },800);
+}
+
+function applyRemoteSnapshot(docData){
+  if(!docData||!docData.data)return;
+  applyingRemoteSync=true;
+  try{
+    Object.keys(docData.data).forEach(function(k){
+      try{
+        var remote=docData.data[k];
+        if(localStorage.getItem(k)!==remote)localStorage.setItem(k,remote);
+      }catch(e){}
+    });
+    load();
+    try{var ns=localStorage.getItem(notifKey);if(ns)notifSettings=JSON.parse(ns);}catch(e){}
+    render();
+    if(typeof renderLoopsV5==='function')renderLoopsV5();
+    if(typeof renderDealNotesV5==='function')renderDealNotesV5();
+    if(typeof renderPipeline==='function')renderPipeline();
+    if(typeof renderHliTracker==='function')renderHliTracker();
+    if(typeof renderAffirmations==='function')renderAffirmations();
+    if(typeof renderTodayPanel==='function')renderTodayPanel();
+  }finally{
+    setTimeout(function(){applyingRemoteSync=false;},300);
+  }
+}
+
+function manualSyncPull(){
+  if(!syncEnabled){celebrate('☁︎ Sync is off — add your Firebase config to turn it on (see setup guide)');return;}
+  if(!syncDb||!syncUid){celebrate('⟳ Still connecting…');return;}
+  setSyncPill('connecting');
+  syncDb.collection('trackers').doc(syncUid).get().then(function(doc){
+    if(doc.exists)applyRemoteSnapshot(doc.data());
+    setSyncPill('synced');
+    celebrate('☁︎ Synced');
+  }).catch(function(err){console.log('[sync] pull error',err);setSyncPill('error');});
+}
+
+function initSync(){
+  if(!syncEnabled){setSyncPill('off');return;}
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    setSyncPill('connecting');
+    firebase.auth().signInAnonymously().then(function(cred){
+      syncUid=cred.user.uid;
+      syncDb=firebase.firestore();
+      syncDb.collection('trackers').doc(syncUid).onSnapshot(function(doc){
+        if(doc.exists){applyRemoteSnapshot(doc.data());}
+        else{pushSyncSnapshotNow();}
+        setSyncPill('synced');
+      },function(err){console.log('[sync] listen error',err);setSyncPill('error');});
+    }).catch(function(err){console.log('[sync] auth error',err);setSyncPill('error');});
+  }catch(e){console.log('[sync] init error',e);setSyncPill('error');}
+}
+
+// Wrap every save* function so a debounced snapshot goes up after each local write
+['saveState','saveNotes','saveLoops','saveDealNotes','savePipeline','saveHliIncome','saveNotifSettings','saveAffs','saveStreakData'].forEach(function(fnName){
+  var orig=window[fnName];
+  if(typeof orig==='function'){
+    window[fnName]=function(){var r=orig.apply(this,arguments);pushSyncSnapshot();return r;};
+  }
+});
+
+initSync();
 
 render();
 </script>
