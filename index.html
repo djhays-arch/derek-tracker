@@ -2836,8 +2836,7 @@ function v6Boot(){
     ['btn-send-claude','btn-send-claude-v5'].forEach(function(id){
       var b=document.getElementById(id);if(b){b.disabled=false;b.textContent='✦ Copy for Claude';}
     });
-    var mb=document.getElementById('btn-morning-brief');
-    if(mb)mb.textContent='✦ Build Brief & Copy';
+    document.querySelectorAll('.btn-brief').forEach(function(b){b.textContent='✦ Build Brief & Copy';});
     var tb=document.getElementById('btn-thursday');
     if(tb)tb.textContent='⚡ Build Report Prompt';
     /* boot sync if configured */
