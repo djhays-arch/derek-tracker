@@ -624,10 +624,21 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
     <div class="today-quick-row">
       <button class="today-quick-chip primary" onclick="generateMorningBrief();expandTodaySection('sec-morning')">☀️ Morning Brief</button>
       <button class="today-quick-chip" onclick="document.getElementById('deal-note-input-v5').focus();expandTodaySection('sec-daily')">📝 Log Deal Note</button>
-      <button class="today-quick-chip" onclick="document.getElementById('loop-input-v5').focus();expandTodaySection('sec-daily')">⚡ Add Loop</button>
+      <button class="today-quick-chip" onclick="v6JumpToDealUpdate()">🏗️ Deal Update</button>
       <button class="today-quick-chip" onclick="syncCalendar()">↻ Sync Calendar</button>
       <button class="today-quick-chip" onclick="buildSnapshot();expandTodaySection('sec-evening')">🌙 Evening Snapshot</button>
     </div>
+  </div>
+
+  <!-- V6.1: Open Loops moved to top of Today -->
+  <div class="loops-block">
+    <div class="loops-label"><span>⚡ Open Loops</span><span id="loops-count-v5" style="color:var(--text3);font-size:11px;font-weight:400"></span></div>
+    <div class="loop-add-row">
+      <input class="loop-input" id="loop-input-v5" placeholder="Drop a task, call, or thing before it cycles…" autocomplete="off" onkeydown="if(event.key==='Enter')addLoopV5()">
+      <button class="loop-add-btn" onclick="addLoopV5()">+ Add</button>
+    </div>
+    <div id="loop-list-v5"><div class="loops-empty">Nothing captured yet.</div></div>
+    <div class="loops-footer"><button class="btn-clear-done" onclick="clearDoneLoops()">Clear completed</button></div>
   </div>
 
   <!-- Up Next card (from old Overview) -->
@@ -646,7 +657,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
       <span>📅 Today's Calendar</span>
       <button class="btn-sync-cal" id="btn-sync-cal-v5" onclick="syncCalendar()">↻ Sync</button>
     </div>
-    <div id="cal-events-list-v5"><div class="cal-empty">Tap Sync to pull today's events from Google Calendar.</div></div>
+    <div id="cal-events-list-v5"><div class="cal-empty">Tap ✎ Paste to add today's events from Google Calendar.</div></div>
   </div>
 
   <!-- AUTO-BRIEF NOTICE -->
@@ -704,18 +715,17 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   <div class="today-section expanded" id="sec-daily">
     <div class="today-section-header" onclick="toggleTodaySection('sec-daily')">
       <div class="today-section-icon">✓</div>
-      <div class="today-section-title">Daily Execution<div style="font-size:11px;color:var(--text3);font-weight:400;margin-top:2px">Deal notes · Open loops · Focus blocks</div></div>
+      <div class="today-section-title">Daily Execution<div style="font-size:11px;color:var(--text3);font-weight:400;margin-top:2px">Deal notes · Focus blocks</div></div>
       <div class="today-section-progress" id="t-d-prog">0/5</div>
       <div class="today-chevron">▾</div>
     </div>
     <div class="today-section-body">
       <div class="today-section-body-inner">
-        <!-- Thursday alert -->
-        <div id="thursday-alert-v5" class="alert-strip" style="margin-top:14px">⚠ Thursday — Lead Report due today. See report builder below.</div>
+        <!-- V6.1: on-demand Lead Report (was Thursday-only) -->
         <div class="thursday-block" id="thursday-block-v5">
-          <div class="thursday-label">📋 Thursday Lead Report</div>
-          <div class="thursday-desc">Builds a draft email to Ty + Christian using your deal notes, loops, and pipeline status from this week.</div>
-          <button class="btn-thursday" onclick="buildThursdayReport()">⚡ Generate Draft Report</button>
+          <div class="thursday-label">📋 Lead Report — on demand</div>
+          <div class="thursday-desc">Builds a snapshot of where every deal stands right now, from this week's deal notes, loops, and pipeline statuses. Run it any time.</div>
+          <button class="btn-thursday" onclick="buildThursdayReport()">⚡ Build Report Prompt</button>
           <div class="thursday-draft" id="thursday-draft-v5"></div>
         </div>
         <!-- Deal notes (with auto-tag) -->
@@ -726,16 +736,6 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
             <button class="deal-note-btn" onclick="addDealNoteV5()">+ Log</button>
           </div>
           <div id="deal-note-list-v5"><div class="deal-notes-empty">No deal notes logged today.</div></div>
-        </div>
-        <!-- Open loops -->
-        <div class="loops-block">
-          <div class="loops-label"><span>⚡ Open Loops</span><span id="loops-count-v5" style="color:var(--text3);font-size:11px;font-weight:400"></span></div>
-          <div class="loop-add-row">
-            <input class="loop-input" id="loop-input-v5" placeholder="Drop a task, call, or thing before it cycles…" autocomplete="off" onkeydown="if(event.key==='Enter')addLoopV5()">
-            <button class="loop-add-btn" onclick="addLoopV5()">+ Add</button>
-          </div>
-          <div id="loop-list-v5"><div class="loops-empty">Nothing captured yet.</div></div>
-          <div class="loops-footer"><button class="btn-clear-done" onclick="clearDoneLoops()">Clear completed</button></div>
         </div>
         <div id="today-daily-blocks"></div>
         <div class="note-area"><div class="note-label">Today's HLI micro-action</div><textarea class="note-input" id="note-daily-v5" placeholder="What's the ONE HLI task today?"></textarea></div>
@@ -773,6 +773,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   </div>
 
   <div class="quote-block"><div class="quote-text">"Today and every day, I choose to create the best day of my life."</div></div>
+  <div style="text-align:center;font-size:10.5px;color:var(--text3);margin:-6px 0 14px">v6.2 · Jul 16 2026</div>
 </div>
 <!-- ============ END V5 TODAY PANEL ============ -->
 
@@ -927,7 +928,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   <div class="check-row" onclick="toggle('w1')" id="row-w1"><div class="check-box" id="box-w1"><svg class="tick" viewBox="0 0 11 8"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="check-label">Review pipeline in Pipeline tab</div><div class="check-meta">Status, movement, stale deals</div></div>
   <div class="check-row" onclick="toggle('w2')" id="row-w2"><div class="check-box" id="box-w2"><svg class="tick" viewBox="0 0 11 8"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="check-label">Identify Top 3 deal priorities for the week</div><div class="check-meta">Write them. Own them.</div></div>
   <div class="check-row" onclick="toggle('w3')" id="row-w3"><div class="check-box" id="box-w3"><svg class="tick" viewBox="0 0 11 8"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="check-label">Block calendar for deep work on priority deals</div><div class="check-meta">Protect time before the week fills</div></div>
-  <div class="check-row" onclick="toggle('w4')" id="row-w4"><div class="check-box" id="box-w4"><svg class="tick" viewBox="0 0 11 8"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="check-label">Set Thursday Lead Report prep time</div><div class="check-meta">Block Wed PM or Thu AM</div></div>
+  <div class="check-row" onclick="toggle('w4')" id="row-w4"><div class="check-box" id="box-w4"><svg class="tick" viewBox="0 0 11 8"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="check-label">Pull a Lead Report snapshot</div><div class="check-meta">On demand — builder on Today tab</div></div>
   <div class="check-row" onclick="toggle('w5')" id="row-w5"><div class="check-box" id="box-w5"><svg class="tick" viewBox="0 0 11 8"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="check-label">HLI Power Hour — week's ONE needle-mover</div><div class="check-meta">What moves HLI forward?</div></div>
   <div class="note-area"><div class="note-label">This week's top 3 deals</div><textarea class="note-input" id="note-weekly" placeholder="1. &#10;2. &#10;3. "></textarea></div>
   <button class="btn-ghost" onclick="resetSection(['w1','w2','w3','w4','w5'])">↺ Reset weekly</button>
@@ -993,7 +994,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
     </div>
     <div class="pipeline-add-row">
       <input class="pipeline-input" id="pipeline-deal-name" placeholder="Deal name / address…" autocomplete="off">
-      <input class="pipeline-input" id="pipeline-deal-county" placeholder="County" autocomplete="off" style="flex:1;min-width:80px">
+      <input class="pipeline-input" id="pipeline-deal-county" placeholder="Jurisdiction" autocomplete="off" style="flex:1;min-width:80px">
       <select class="pipeline-select" id="pipeline-deal-status">
         <option value="prospect">Prospect</option>
         <option value="active">Active</option>
@@ -1077,10 +1078,6 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
     <div class="notif-row">
       <div class="notif-info"><div class="notif-title-text">🌙 Evening Dump</div><div class="notif-time">8:30 PM daily</div></div>
       <div class="toggle-switch" id="toggle-evening" onclick="toggleNotif('evening')"></div>
-    </div>
-    <div class="notif-row">
-      <div class="notif-info"><div class="notif-title-text">📋 Thursday Lead Report</div><div class="notif-time">7:00 AM every Thursday</div></div>
-      <div class="toggle-switch" id="toggle-thursday" onclick="toggleNotif('thursday')"></div>
     </div>
     <div class="notif-status" id="notif-status"></div>
     <button class="btn-ghost" onclick="testNotification()" style="margin-top:12px">🔔 Send test notification</button>
@@ -1335,7 +1332,7 @@ function renderPipeline(){
   if(!pipeline.length){wrap.innerHTML='<div class="pipeline-empty">No deals yet. Add your first deal above.</div>';return;}
   if(!filtered.length){wrap.innerHTML='<div class="pipeline-empty">No deals match this filter.</div>';return;}
   var table=document.createElement('table');table.className='pipeline-table';
-  table.innerHTML='<thead><tr><th>Deal</th><th>County</th><th>Status</th><th>Last Note</th><th></th></tr></thead>';
+  table.innerHTML='<thead><tr><th>Deal</th><th>Jurisdiction</th><th>Status</th><th>Last Note</th><th></th></tr></thead>';
   var tbody=document.createElement('tbody');
   filtered.forEach(function(deal){
     var origIdx=pipeline.indexOf(deal);
@@ -1534,10 +1531,9 @@ function renderTodayPanel(){
   snProg('sn-morning','t-m-prog',5);
   snProg('sn-daily','t-d-prog',5);
   snProg('sn-evening','t-e-prog',2);
-  // Thursday alert
-  var isThurs=(new Date()).getDay()===4;
-  var ta=document.getElementById('thursday-alert-v5');if(ta)ta.style.display=isThurs?'block':'none';
-  var tb=document.getElementById('thursday-block-v5');if(tb)tb.style.display=isThurs?'block':'none';
+  // V6.1: Lead Report builder is on-demand — always available, no Thursday alert
+  var ta=document.getElementById('thursday-alert-v5');if(ta)ta.style.display='none';
+  var tb=document.getElementById('thursday-block-v5');if(tb)tb.style.display='block';
   // Calendar events mirror
   var src=document.getElementById('cal-events-list'),dst=document.getElementById('cal-events-list-v5');
   if(src&&dst&&src.innerHTML)dst.innerHTML=src.innerHTML;
@@ -1670,8 +1666,7 @@ function renderBackupSize(){
 // ─── PUSH NOTIFICATIONS ──────────────────────────────────────────
 var NOTIF_SCHEDULES={
   morning:{hour:5,min:30,days:[0,1,2,3,4,5,6],title:'🌅 Morning Protocol',body:'5:30 AM — Meditation, affirmations, visualization. Let\'s go.'},
-  evening:{hour:20,min:30,days:[0,1,2,3,4,5,6],title:'🌙 Evening Dump',body:'8:30 PM — Brain dump time. Clear the queue before bed.'},
-  thursday:{hour:7,min:0,days:[4],title:'📋 Thursday Lead Report',body:'Lead Report goes out today. Pull deal notes and draft it.'}
+  evening:{hour:20,min:30,days:[0,1,2,3,4,5,6],title:'🌙 Evening Dump',body:'8:30 PM — Brain dump time. Clear the queue before bed.'}
 };
 function renderNotifSettings(){
   Object.keys(notifSettings).forEach(function(k){var el=document.getElementById('toggle-'+k);if(el)el.classList.toggle('on',!!notifSettings[k]);});
@@ -1830,7 +1825,7 @@ function generateMorningBrief(){
     '\n\nOPEN LOOPS (persistent):\n'+(openLoops.length?openLoops.map(function(l){return '• '+l.text+(l.added&&l.added!==todayStr?' ('+getDayAge(l.added)+')':'');}).join('\n'):'None.')+
     '\n\nACTIVE PIPELINE (non-dead):\n'+(pipeline.filter(function(d){return d.status!=='dead';}).slice(0,8).map(function(d){return '• '+d.name+(d.county?' ('+d.county+')':'')+' — '+STATUS_LABELS[d.status]+(d.lastNote?' | Last: '+d.lastNote.substring(0,60):'');}).join('\n')||'None entered yet.');
 
-  var systemPrompt='You are Derek Hays\' personal Executive Assistant Agent. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. He runs a 9-county pipeline and a side land investing business called Heritage Land Investment (HLI). Faith-driven, family-first.\n\nDeliver a tight Morning Brief in this exact format:\n\n📅 MORNING BRIEF — [Day, Date]\n\nCALENDAR TODAY\n• [Time] — [Event] — [prep note if relevant]\n\nTOP 3 PRIORITIES\n1. [Priority — specific action]\n2. [Priority]\n3. [Priority]\n\nPEOPLE TO RESPOND TO\n• [Name] re: [topic] — [urgency]\n\nCARRY-FORWARD FROM YESTERDAY\n• [Key item — 1-2 sentences max]\n\n🎯 FIRST MOVE: [Single most important action before 9am]\n\nRules: Never pad. Flag hard deadlines with ⚠️. If today is Thursday, remind him the Lead Report goes out. Keep it scannable — this is read at 5:30 AM.';
+  var systemPrompt='You are Derek Hays\' personal Executive Assistant Agent. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. He runs a 9-county pipeline and a side land investing business called Heritage Land Investment (HLI). Faith-driven, family-first.\n\nDeliver a tight Morning Brief in this exact format:\n\n📅 MORNING BRIEF — [Day, Date]\n\nCALENDAR TODAY\n• [Time] — [Event] — [prep note if relevant]\n\nTOP 3 PRIORITIES\n1. [Priority — specific action]\n2. [Priority]\n3. [Priority]\n\nPEOPLE TO RESPOND TO\n• [Name] re: [topic] — [urgency]\n\nCARRY-FORWARD FROM YESTERDAY\n• [Key item — 1-2 sentences max]\n\n🎯 FIRST MOVE: [Single most important action before 9am]\n\nRules: Never pad. Flag hard deadlines with ⚠️. Keep it scannable — this is read at 5:30 AM.';
 
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
@@ -2363,7 +2358,13 @@ render();
 
 <script>
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  V6 UPGRADE BLOCK — July 15, 2026                              ║
+   ║  V6 UPGRADE BLOCK — July 15, 2026 · v6.1 edits July 16, 2026:   ║
+   ║  Open Loops moved to top of Today (HTML), County→Jurisdiction,  ║
+   ║  Thursday Lead Report → on-demand Lead Report (alert/notif      ║
+   ║  removed, builder always visible, prompts reworded).            ║
+   ║  v6.2 (same day): Quick Deal card moved into Daily Execution,   ║
+   ║  jump chip at top, Add Loop chip removed, brief prompt          ║
+   ║  collapsed behind "View full prompt".                           ║                              ║
    ║  Purely additive. Deleting this entire <script> block          ║
    ║  reverts to stock v5 behavior. Contains:                       ║
    ║   • Copy/paste replacements for the 4 dead API buttons         ║
@@ -2415,7 +2416,7 @@ window.generateMorningBrief=function(){
     '\n\nYESTERDAY\'S TOP 3:\n'+((yNotes.top3_0||yNotes.top3_1||yNotes.top3_2)?[yNotes.top3_0,yNotes.top3_1,yNotes.top3_2].filter(Boolean).map(function(t,i){return (i+1)+'. '+t;}).join('\n'):'None.')+
     '\n\nOPEN LOOPS (persistent):\n'+(openLoops.length?openLoops.map(function(l){return '• '+l.text+(l.added&&l.added!==todayStr?' ('+getDayAge(l.added)+')':'');}).join('\n'):'None.')+
     '\n\nACTIVE PIPELINE (non-dead):\n'+(pipeline.filter(function(d){return d.status!=='dead';}).map(function(d){return '• '+d.name+(d.county?' ('+d.county+')':'')+' — '+STATUS_LABELS[d.status]+(d.lastNote?' | Last: '+d.lastNote.substring(0,80):'');}).join('\n')||'None entered yet.');
-  var sys='You are Derek Hays\' personal Executive Assistant Agent. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. He runs a 9-county pipeline and a side land investing business called Heritage Land Investment (HLI). Faith-driven, family-first.\n\nDeliver a tight Morning Brief in this exact format:\n\n📅 MORNING BRIEF — [Day, Date]\n\nCALENDAR TODAY\n• [Time] — [Event] — [prep note if relevant]\n\nTOP 3 PRIORITIES\n1. [Priority — specific action]\n2. [Priority]\n3. [Priority]\n\nPEOPLE TO RESPOND TO\n• [Name] re: [topic] — [urgency]\n\nCARRY-FORWARD FROM YESTERDAY\n• [Key item — 1-2 sentences max]\n\n🎯 FIRST MOVE: [Single most important action before 9am]\n\nRules: Never pad. Flag hard deadlines with ⚠️. If today is Thursday, remind him the Lead Report goes out. Keep it scannable — this is read at 5:30 AM.';
+  var sys='You are Derek Hays\' personal Executive Assistant Agent. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. He runs a 9-county pipeline and a side land investing business called Heritage Land Investment (HLI). Faith-driven, family-first.\n\nDeliver a tight Morning Brief in this exact format:\n\n📅 MORNING BRIEF — [Day, Date]\n\nCALENDAR TODAY\n• [Time] — [Event] — [prep note if relevant]\n\nTOP 3 PRIORITIES\n1. [Priority — specific action]\n2. [Priority]\n3. [Priority]\n\nPEOPLE TO RESPOND TO\n• [Name] re: [topic] — [urgency]\n\nCARRY-FORWARD FROM YESTERDAY\n• [Key item — 1-2 sentences max]\n\n🎯 FIRST MOVE: [Single most important action before 9am]\n\nRules: Never pad. Flag hard deadlines with ⚠️. Keep it scannable — this is read at 5:30 AM.';
   var full=sys+'\n\n════ TODAY\'S DATA ════\n\n'+context;
   window.__v6LastBrief=full;
   try{localStorage.setItem('dht_autobrief_'+todayStr,'1');}catch(e){}
@@ -2423,9 +2424,13 @@ window.generateMorningBrief=function(){
     if(respEl){
       respEl.className='brief-response visible';
       respEl.style.fontStyle='normal';respEl.style.color='var(--text2)';
-      respEl.textContent=ok
-        ?'✓ Brief prompt copied to clipboard.\n\n1. Open Claude (app or claude.ai)\n2. Paste + send\n3. Read your Morning Brief there\n\nTap the button again any time to re-copy.'
-        :full;
+      /* v6.2: full prompt tucked under a collapsible toggle */
+      var escT=function(t){return String(t).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});};
+      respEl.innerHTML='<div style="white-space:pre-wrap">'+
+        (ok?'✓ Brief prompt copied to clipboard.\n\n1. Open Claude (app or claude.ai)\n2. Paste + send\n3. Read your Morning Brief there\n\nTap the button again any time to re-copy.'
+           :'⚠ Couldn\'t auto-copy — open the full prompt below and copy it manually.')+'</div>'+
+        '<details'+(ok?'':' open')+' style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--text3);user-select:none">View full prompt</summary>'+
+        '<div style="white-space:pre-wrap;font-family:monospace;font-size:11.5px;line-height:1.6;margin-top:8px;max-height:260px;overflow-y:auto;border-top:1px solid var(--border);padding-top:8px">'+escT(full)+'</div></details>';
     }
     if(btn){btn.disabled=false;btn.textContent='✦ Re-copy Brief Prompt';}
     if(ok&&typeof celebrate==='function')celebrate('☀️ Brief prompt copied — paste into Claude');
@@ -2502,11 +2507,11 @@ window.buildThursdayReport=function(){
   }
   var openLoopsList=loops.filter(function(l){return!l.done;}).map(function(l){return l.text;});
   var pipeSum=pipeline.filter(function(d){return d.status!=='dead';}).map(function(d){return d.name+(d.county?' ('+d.county+')':'')+' — '+STATUS_LABELS[d.status]+(d.lastNote?' — Last: '+d.lastNote:'');}).join('\n');
-  var prompt='You are Derek Hays\' EA. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. Every Thursday he sends a Lead Report email to Ty Rinehart (Director of Land) and Christian (Division President).\n\nDATE: '+DAYS[today.getDay()]+', '+MONTHS[today.getMonth()]+' '+today.getDate()+
+  var prompt='You are Derek Hays\' EA. Derek is a Land Acquisition Manager at Arbor Homes in Indianapolis. He wants an on-demand Lead Report — a current snapshot of where every deal in his pipeline stands.\n\nDATE: '+DAYS[today.getDay()]+', '+MONTHS[today.getMonth()]+' '+today.getDate()+
     '\n\nACTIVE PIPELINE:\n'+(pipeSum||'No deals in pipeline yet.')+
     '\n\nDEAL NOTES THIS WEEK:\n'+(allDealNotes.length?allDealNotes.map(function(n){return '['+n.date+' '+n.time+'] '+n.text;}).join('\n'):'None logged.')+
     '\n\nOPEN LOOPS:\n'+(openLoopsList.length?openLoopsList.map(function(l){return '• '+l;}).join('\n'):'None.')+
-    '\n\nDraft a professional Thursday Lead Report email. Subject line, then deal-by-deal bullets with status + any notes. Flag anything needing leadership attention. Under 300 words. Sign as Derek.';
+    '\n\nDraft a concise Lead Report snapshot. Deal-by-deal bullets with status + latest note. Flag anything stalled, aging, or needing attention. Under 300 words.';
   v6Copy(prompt).then(function(ok){
     var draft=document.getElementById('thursday-draft');
     if(draft){
@@ -2544,8 +2549,6 @@ window.checkNotifications=function(){
 window.maybeAutoBrief=function(){
   try{
     var hr=new Date().getHours();
-    // Thursdays: always open the Morning section (Lead Report day)
-    if(today.getDay()===4&&typeof expandTodaySection==='function')expandTodaySection('sec-morning');
     if(hr>=10)return;
     var key='dht_v6_autoexpand_'+todayStr;
     if(localStorage.getItem(key))return;
@@ -2749,6 +2752,17 @@ window.v6DisableSync=function(){
   }
 });
 
+/* ══════════ v6.2: jump chip → Quick Deal Update card ══════════ */
+window.v6JumpToDealUpdate=function(){
+  if(typeof expandTodaySection==='function')expandTodaySection('sec-daily');
+  setTimeout(function(){
+    var card=document.getElementById('v6-qd-card');
+    if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
+    var sel=document.getElementById('v6-qd-deal');
+    if(sel)try{v6FillQuickDeal();sel.focus();}catch(e){}
+  },420);
+};
+
 /* ══════════ UI injection + relabels (run after DOM is ready) ══════════ */
 function v6Boot(){
   try{
@@ -2797,7 +2811,10 @@ function v6Boot(){
           '<div style="display:flex;gap:8px">'+
           '<input id="v6-qd-note" placeholder="Note (optional)…" autocomplete="off" style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:13px">'+
           '<button onclick="v6QuickDealSave()" style="padding:9px 16px;border:none;border-radius:10px;background:var(--text);color:var(--bg);font-weight:600;cursor:pointer;font-size:13px">Save</button></div>';
-        chipRow.insertAdjacentElement('afterend',card);
+        /* v6.2: card lives in Daily Execution, above deal notes; chip at top jumps to it */
+        var dnb=document.querySelector('#sec-daily .deal-note-block');
+        if(dnb)dnb.parentElement.insertBefore(card,dnb);
+        else chipRow.insertAdjacentElement('afterend',card);
         v6FillQuickDeal();
         document.getElementById('v6-qd-deal').addEventListener('focus',v6FillQuickDeal);
         document.getElementById('v6-qd-deal').addEventListener('change',function(){
