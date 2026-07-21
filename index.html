@@ -622,11 +622,11 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 
     <!-- Quick action chips - one-tap to most-used features -->
     <div class="today-quick-row">
-      <button class="today-quick-chip primary" onclick="generateMorningBrief();expandTodaySection('sec-morning')">☀️ Morning Brief</button>
+      <button class="today-quick-chip primary" onclick="generateMorningBrief();v6JumpToSection('sec-morning','#morning-brief-block-v5')">☀️ Morning Brief</button>
       <button class="today-quick-chip" onclick="document.getElementById('deal-note-input-v5').focus();expandTodaySection('sec-daily')">📝 Log Deal Note</button>
       <button class="today-quick-chip" onclick="v6JumpToDealUpdate()">🏗️ Deal Update</button>
       <button class="today-quick-chip" onclick="syncCalendar()">↻ Sync Calendar</button>
-      <button class="today-quick-chip" onclick="buildSnapshot();expandTodaySection('sec-evening')">🌙 Evening Snapshot</button>
+      <button class="today-quick-chip" onclick="buildSnapshot();v6JumpToSection('sec-evening','#sec-evening .snapshot-box')">🌙 Evening Snapshot</button>
     </div>
   </div>
 
@@ -773,7 +773,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
   </div>
 
   <div class="quote-block"><div class="quote-text">"Today and every day, I choose to create the best day of my life."</div></div>
-  <div style="text-align:center;font-size:10.5px;color:var(--text3);margin:-6px 0 14px">v6.2 · Jul 16 2026</div>
+  <div style="text-align:center;font-size:10.5px;color:var(--text3);margin:-6px 0 14px">v6.3 · Jul 16 2026</div>
 </div>
 <!-- ============ END V5 TODAY PANEL ============ -->
 
@@ -2364,7 +2364,9 @@ render();
    ║  removed, builder always visible, prompts reworded).            ║
    ║  v6.2 (same day): Quick Deal card moved into Daily Execution,   ║
    ║  jump chip at top, Add Loop chip removed, brief prompt          ║
-   ║  collapsed behind "View full prompt".                           ║                              ║
+   ║  collapsed behind "View full prompt".                           ║
+   ║  v6.3: quick chips now scroll to their section (Evening         ║
+   ║  Snapshot + Morning Brief) via v6JumpToSection.                 ║                              ║
    ║  Purely additive. Deleting this entire <script> block          ║
    ║  reverts to stock v5 behavior. Contains:                       ║
    ║   • Copy/paste replacements for the 4 dead API buttons         ║
@@ -2751,6 +2753,15 @@ window.v6DisableSync=function(){
     window[name]=function(){var r=orig.apply(this,arguments);v6SchedulePush();return r;};
   }
 });
+
+/* ══════════ v6.3: generic section jump (expand + scroll) ══════════ */
+window.v6JumpToSection=function(secId,targetSel){
+  if(typeof expandTodaySection==='function')expandTodaySection(secId);
+  setTimeout(function(){
+    var t=(targetSel&&document.querySelector(targetSel))||document.getElementById(secId);
+    if(t)t.scrollIntoView({behavior:'smooth',block:'center'});
+  },420);
+};
 
 /* ══════════ v6.2: jump chip → Quick Deal Update card ══════════ */
 window.v6JumpToDealUpdate=function(){
